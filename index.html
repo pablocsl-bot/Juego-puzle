@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>🧩 Puzle K‑Pop Warriors (FÁCIL v4 + música)</title>
+  <style>
+    :root{
+      --shadow: 0 14px 40px rgba(0,0,0,.22);
+      --panel: rgba(255,255,255,.80);
+      --panelBorder: rgba(255,255,255,.35);
+      --muted:#4f5164;
+      --good:#2eb972;
+
+      /* Para que "ayuda" calce: sin gaps reales en el tablero */
+      --cellGap: 0px;
+      --pad: 10px;
+      --divider: 6px;
+
+      --accent:#7c4dff;
+      --accent2:#00d4ff;
+      --pink:#ff3fa7;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      min-height:100svh;
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(124,77,255,.35), transparent 55%),
+        radial-gradient(900px 600px at 85% 20%, rgba(0,212,255,.30), transparent 55%),
+        radial-gradient(900px 700px at 40% 90%, rgba(255,64,129,.20), transparent 55%),
+        linear-gradient(180deg, #0b0b16, #141429 55%, #0a0a12);
+      display:flex;
+      justify-content:center;
+      padding: 10px;
+      overflow:hidden;
+      color:#fff;
+    }
+
+    /* fondos/stickers "k-pop" */
+    .glow{
+      position:fixed; inset:-40px;
+      pointer-events:none;
+      opacity:.55;
+      background:
+        radial-gradient(520px 240px at 15% 25%, rgba(255,63,167,.30), transparent 70%),
+        radial-gradient(520px 240px at 85% 18%, rgba(0,212,255,.28), transparent 70%),
+        radial-gradient(560px 280px at 55% 80%, rgba(124,77,255,.24), transparent 70%);
+      filter: blur(2px);
+    }
+    .app{
+      width:min(980px, 100%);
+      height: calc(100svh - 20px);
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      overflow:hidden;
+      position:relative;
+      z-index:1;
+    }
+
+    .hero{
+      flex: 0 0 auto;
+      padding: 10px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+      position:relative;
+    }
+    .hero::after{
+      content:"";
+      position:absolute; inset:-2px;
+      background: linear-gradient(90deg, rgba(255,63,167,.18), rgba(0,212,255,.18), rgba(124,77,255,.18));
+      filter: blur(14px);
+      opacity:.8;
+      z-index:-1;
+    }
+
+    .titleRow{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    h1{ margin:0; font-size: 16px; line-height: 1.05; }
+    .subtitle{ margin: 3px 0 0; font-size: 12px; color: rgba(255,255,255,.80); line-height:1.05rem; }
+
+    .stickers{
+      display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;
+      font-size: 15px; opacity:.98; user-select:none;
+      filter: drop-shadow(0 8px 18px rgba(0,0,0,.35));
+    }
+
+    .controls{
+      margin-top: 8px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+    .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+    label{ font-weight:800; font-size:12px; color: rgba(255,255,255,.92); }
+    input[type="file"]{
+      width: 100%;
+      padding: 9px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 12px;
+      color:#fff;
+    }
+    select, button{
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
+      color:#fff;
+      padding: 9px 10px;
+      font-size: 13.5px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button{ cursor:pointer; font-weight:900; }
+    button.primary{
+      background: linear-gradient(135deg, rgba(124,77,255,.95), rgba(0,212,255,.85));
+      border-color: rgba(255,255,255,.22);
+      box-shadow: 0 10px 26px rgba(124,77,255,.24);
+    }
+    button.secondary{
+      background: linear-gradient(135deg, rgba(255,63,167,.78), rgba(124,77,255,.65));
+      border-color: rgba(255,255,255,.22);
+    }
+    button:disabled{ opacity:.5; cursor:not-allowed; }
+
+    .toggle{
+      display:flex; align-items:center; gap:8px;
+      padding: 9px 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.18);
+      user-select:none;
+      font-size: 12.5px;
+      color:#fff;
+    }
+    .toggle input{ transform: scale(1.1); }
+
+    /* Main */
+    .main{
+      flex: 1 1 auto;
+      display:grid;
+      grid-template-rows: 1fr auto;
+      gap: 8px;
+      overflow:hidden;
+      align-items:stretch;
+      justify-items:center;
+    }
+    .panel{
+      width: 100%;
+      max-width: 760px;
+      background: var(--panel);
+      color:#1b1b24;
+      border: 1px solid var(--panelBorder);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 8px;
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+    }
+
+    .boardWrap{ width:100%; height:100%; display:flex; justify-content:center; align-items:center; }
+    .board{
+      width: min(92vw, 440px);
+      height: min(44svh, 440px);
+      aspect-ratio: 1/1;
+      border-radius: 18px;
+      background: rgba(255,255,255,.50);
+      border: 2px solid rgba(0,0,0,.08);
+      display:grid;
+      gap: var(--cellGap);
+      padding: var(--pad);
+      position: relative;
+      overflow:hidden;
+      user-select:none;
+      touch-action:none;
+    }
+
+    .helpLayer{
+      position:absolute;
+      inset: var(--pad);
+      border-radius: 14px;
+      background-repeat:no-repeat;
+      background-position: 0 0;
+      opacity: .35;
+      pointer-events:none;
+      filter: saturate(1.05);
+    }
+
+    .slot{
+      border-radius: 14px;
+      border: 2px solid rgba(0,0,0,.08);
+      background: rgba(255,255,255,.45);
+      position:relative;
+      overflow:hidden;
+      outline: var(--divider) solid rgba(255,255,255,.18);
+      outline-offset: calc(var(--divider) * -1);
+    }
+    .slot.good{ border-color: rgba(46,185,114,.55); background: rgba(46,185,114,.10); }
+    .slot.locked{ border-color: rgba(46,185,114,.35); }
+    .slot.pulse{ animation: pulse 0.6s ease-in-out 2; }
+    @keyframes pulse{ 0%{ transform: scale(1);} 50%{ transform: scale(1.03);} 100%{ transform: scale(1);} }
+
+    /* Picker */
+    .pickerTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 2px 2px 6px;
+    }
+    .bigHint{ font-size: 12.5px; color: var(--muted); line-height:1.15rem; }
+    .pageBadge{
+      font-weight:900;
+      font-size: 12px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.9);
+      border: 1px solid rgba(0,0,0,.08);
+      white-space:nowrap;
+    }
+
+    .pieceGrid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      justify-items:center;
+      padding: 8px;
+      background: rgba(255,255,255,.55);
+      border: 2px solid rgba(0,0,0,.08);
+      border-radius: 18px;
+    }
+
+    .piece{
+      width: var(--ps);
+      height: var(--ps);
+      border-radius: 14px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.22);
+      border: 1px solid rgba(0,0,0,.08);
+      background-repeat: no-repeat;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .08s ease;
+      user-select:none;
+    }
+    .piece:active{ transform: scale(1.03); }
+    .piece.selected{
+      outline: 4px solid rgba(124,77,255,.55);
+      outline-offset: 3px;
+      transform: scale(1.03);
+    }
+    .piece.done{ opacity: .35; filter: grayscale(.9); pointer-events:none; }
+
+    .navRow{
+      display:flex;
+      gap: 8px;
+      justify-content:center;
+      margin-top: 8px;
+    }
+    .navRow button{
+      width: min(44vw, 220px);
+      background: linear-gradient(135deg, rgba(255,64,129,.72), rgba(0,212,255,.60));
+      border-color: rgba(255,255,255,.28);
+    }
+    .navRow button:disabled{ background: rgba(0,0,0,.08); color: rgba(0,0,0,.45); border-color: rgba(0,0,0,.08); }
+
+    .status{
+      margin-top: 8px;
+      padding: 9px 10px;
+      border-radius: 12px;
+      background: rgba(124,77,255,.10);
+      border: 1px solid rgba(124,77,255,.22);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-size: 12.5px;
+    }
+    .badge{
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.9);
+      border: 1px solid rgba(0,0,0,.08);
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .win{ background: rgba(46,185,114,.12); border-color: rgba(46,185,114,.28); }
+
+    /* Overlay victoria */
+    .overlay{
+      position:fixed; inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      background: rgba(0,0,0,.55);
+      z-index: 10;
+    }
+    .modal{
+      width:min(540px, 92vw);
+      border-radius: 22px;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(255,255,255,.55);
+      box-shadow: 0 22px 60px rgba(0,0,0,.35);
+      padding: 16px;
+      color:#151525;
+      position:relative;
+      overflow:hidden;
+    }
+    .modal::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: linear-gradient(90deg, rgba(255,63,167,.25), rgba(0,212,255,.22), rgba(124,77,255,.25));
+      filter: blur(18px);
+      opacity:.9;
+      z-index:-1;
+    }
+    .modal h2{ margin: 0 0 6px; font-size: 20px; }
+    .modal p{ margin: 0 0 12px; font-size: 14px; line-height:1.25rem; }
+    .modal .rowBtns{ display:flex; gap:10px; flex-wrap:wrap; }
+    .modal button{
+      flex:1 1 180px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,.10);
+      background: linear-gradient(135deg, rgba(124,77,255,.95), rgba(0,212,255,.85));
+      color:#fff;
+      font-weight:900;
+    }
+    .modal button.alt{
+      background: linear-gradient(135deg, rgba(255,63,167,.80), rgba(124,77,255,.70));
+    }
+
+    canvas#confetti{
+      position:fixed; inset:0;
+      pointer-events:none;
+      z-index: 11;
+      display:none;
+    }
+
+    @media (max-height: 700px){
+      .subtitle{ display:none; }
+      .board{ height: min(40svh, 420px); }
+      .pieceGrid{ gap: 7px; padding: 7px; }
+    }
+    @media (max-height: 620px){
+      .hero{ padding: 8px; }
+      .controls{ margin-top: 6px; }
+      .board{ height: min(36svh, 400px); }
+      .toggle{ padding: 8px 9px; }
+      select,button{ padding: 8px 9px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+
+  <canvas id="confetti"></canvas>
+
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Felicitaciones">
+    <div class="modal">
+      <h2 id="winTitle">¡Misión completada! ⚔️✨</h2>
+      <p id="winMsg"><strong>Lucía</strong>, ¡lo hiciste increíble! 💖 Eres una guerrera K‑Pop súper valiente. ¡Choque de cinco! ✋</p>
+      <div class="rowBtns">
+        <button id="playAgainBtn">Jugar otra vez</button>
+        <button class="alt" id="closeWinBtn">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app">
+    <div class="hero">
+      <div class="titleRow">
+        <div>
+          <h1>⚔️🧩 Puzle “Guerreras K‑Pop” (modo fácil)</h1>
+          <p class="subtitle">Más llamativo + música opcional. Ayuda calzada con las piezas.</p>
+        </div>
+        <div class="stickers" aria-hidden="true">✨🎶💖⚡🌙🪽</div>
+      </div>
+
+      <div class="controls">
+        <div class="row" style="width:100%;">
+          <div style="flex:1; min-width: 200px;">
+            <label for="imgInput">Sube una imagen</label>
+            <input id="imgInput" type="file" accept="image/*" />
+          </div>
+          <div style="min-width:140px; flex:0 0 auto;">
+            <label for="difficulty">Dificultad</label><br/>
+            <select id="difficulty" style="width:140px;">
+              <option value="2">2×2</option>
+              <option value="3" selected>3×3</option>
+              <option value="4">4×4</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" id="presetRow" style="gap:10px; align-items:center;"><button id="musicBtn" class="secondary" style="height:38px; padding:0 14px; font-size:13px;" type="button" aria-pressed="false" aria-label="Música" title="Música" style="width:42px;height:42px;border-radius:50%;font-size:18px;">🔊</button>
+          <div style="flex:1; min-width:220px;">
+            <label>Imágenes predeterminadas (Guerreras)</label>
+            <div style="display:flex; gap:8px; flex-wrap:nowrap; align-items:center; overflow-x:auto; -webkit-overflow-scrolling:touch; margin-top:6px; padding-bottom:2px;">
+              <button type="button" class="secondary" style="height:38px; padding:0 14px; font-size:13px;" id="preset1Btn" style="display:flex;align-items:center;gap:8px;">
+                <span class="thumb" id="preset1Thumb" style="width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.30);background:rgba(255,255,255,.10);background-size:cover;background-position:center;"></span>
+                Preset 1
+              </button>
+              <button type="button" class="secondary" style="height:38px; padding:0 14px; font-size:13px;" id="preset2Btn" style="display:flex;align-items:center;gap:8px;">
+                <span class="thumb" id="preset2Thumb" style="width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.30);background:rgba(255,255,255,.10);background-size:cover;background-position:center;"></span>
+                Preset 2
+              </button>
+              <button type="button" class="secondary" style="height:38px; padding:0 14px; font-size:13px;" id="preset3Btn" style="display:flex;align-items:center;gap:8px;">
+                <span class="thumb" id="preset3Thumb" style="width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.30);background:rgba(255,255,255,.10);background-size:cover;background-position:center;"></span>
+                Preset 3
+              </button>
+              <button type="button" class="secondary" style="height:38px; padding:0 14px; font-size:13px;" id="loadPresetsBtn" style="flex:0 0 auto; padding:8px 10px; font-size:12.5px; border-radius:14px; white-space:nowrap;">📌 Cargar</button>
+              <input id="presetsInput" type="file" accept="image/*" multiple style="display:none;" />
+            </div>
+</div>
+        </div>
+
+
+        <div class="row">
+          <button id="startBtn" class="primary" disabled>Empezar</button>
+          <button id="shuffleBtn" disabled>Mezclar</button>
+          <div class="toggle">
+            <input type="checkbox" id="helpToggle" checked />
+            <span>Ayuda</span>
+          </div>
+          <div class="toggle" title="Si está activado, solo deja poner la pieza en su lugar correcto (muy fácil).">
+            <input type="checkbox" id="onlyCorrectToggle" checked />
+            <span>Solo correcto</span>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="panel">
+        <div class="boardWrap">
+          <div id="board" class="board" aria-label="Tablero del puzle">
+            <div id="helpLayer" class="helpLayer" aria-hidden="true" style="display:none;"></div>
+          </div>
+        </div>
+
+        <div id="status" class="status" role="status" aria-live="polite">
+          <span id="statusText">Sube una imagen para comenzar.</span>
+          <span class="badge" id="progressBadge">0 / 0</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="pickerTop">
+          <div class="bigHint" id="hintText">Toca una pieza abajo y luego toca su casilla.</div>
+          <div class="pageBadge" id="pageBadge">Piezas 0–0</div>
+        </div>
+
+        <div class="pieceGrid" id="pieceGrid" aria-label="Piezas"></div>
+
+        <div class="navRow">
+          <button id="prevBtn" type="button">⬅️ Anterior</button>
+          <button id="nextBtn" type="button">Siguiente ➡️</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== DOM =====
+    const imgInput = document.getElementById("imgInput");
+    const difficulty = document.getElementById("difficulty");
+    const startBtn = document.getElementById("startBtn");
+    const shuffleBtn = document.getElementById("shuffleBtn");
+    const helpToggle = document.getElementById("helpToggle");
+    const onlyCorrectToggle = document.getElementById("onlyCorrectToggle");
+    const musicBtn = document.getElementById("musicBtn");
+
+    const board = document.getElementById("board");
+    const helpLayer = document.getElementById("helpLayer");
+    const statusEl = document.getElementById("status");
+    const statusText = document.getElementById("statusText");
+    const progressBadge = document.getElementById("progressBadge");
+
+    const pieceGrid = document.getElementById("pieceGrid");
+    const hintText = document.getElementById("hintText");
+    const pageBadge = document.getElementById("pageBadge");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    // ===== Presets (3 imágenes guardadas en localStorage) =====
+    const preset1Btn = document.getElementById("preset1Btn");
+    const preset2Btn = document.getElementById("preset2Btn");
+    const preset3Btn = document.getElementById("preset3Btn");
+    const preset1Thumb = document.getElementById("preset1Thumb");
+    const preset2Thumb = document.getElementById("preset2Thumb");
+    const preset3Thumb = document.getElementById("preset3Thumb");
+    const loadPresetsBtn = document.getElementById("loadPresetsBtn");
+    const presetsInput = document.getElementById("presetsInput");
+
+    const PRESET_KEYS = ["kpop_preset_1","kpop_preset_2","kpop_preset_3"];
+
+    function getPreset(i){
+      try { return localStorage.getItem(PRESET_KEYS[i]); } catch(e){ return null; }
+    }
+    function setPreset(i, dataUrl){
+      try { localStorage.setItem(PRESET_KEYS[i], dataUrl); } catch(e){}
+    }
+    function updatePresetThumbs(){
+      const p1 = getPreset(0), p2 = getPreset(1), p3 = getPreset(2);
+      preset1Thumb.style.backgroundImage = p1 ? `url(${p1})` : "";
+      preset2Thumb.style.backgroundImage = p2 ? `url(${p2})` : "";
+      preset3Thumb.style.backgroundImage = p3 ? `url(${p3})` : "";
+      preset1Btn.disabled = !p1;
+      preset2Btn.disabled = !p2;
+      preset3Btn.disabled = !p3;
+      // si no hay presets, deja un mensaje útil
+      if(!p1 && !p2 && !p3){
+        setStatus("Puedes cargar 3 imágenes predeterminadas (Guerreras) con “Cargar / Cambiar”.");
+      }
+    }
+    function choosePreset(i){
+      const p = getPreset(i);
+      if(!p) return;
+      imgURL = p;
+      startBtn.disabled = false;
+      shuffleBtn.disabled = true;
+      setStatus("Imagen predeterminada elegida ✅ Presiona Empezar.");
+      progressBadge.textContent = "0 / 0";
+      clearAll();
+      applyHelp();
+    }
+
+    loadPresetsBtn?.addEventListener("click", () => presetsInput?.click());
+    presetsInput?.addEventListener("change", async () => {
+      const files = Array.from(presetsInput.files || []).slice(0,3);
+      if(files.length === 0) return;
+
+      const toDataUrl = (file) => new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(fr.result);
+        fr.onerror = reject;
+        fr.readAsDataURL(file);
+      });
+
+      try{
+        for(let i=0;i<3;i++){
+          if(files[i]){
+            const dataUrl = await toDataUrl(files[i]);
+            setPreset(i, dataUrl);
+          }
+        }
+        updatePresetThumbs();
+        beep("ok");
+        setStatus("¡Listo! Presets guardados ✅ Ahora puedes tocarlos arriba.");
+      }catch(e){
+        setStatus("No pude cargar los presets. Intenta nuevamente.");
+      }finally{
+        presetsInput.value = "";
+      }
+    });
+
+    preset1Btn?.addEventListener("click", () => choosePreset(0));
+    preset2Btn?.addEventListener("click", () => choosePreset(1));
+    preset3Btn?.addEventListener("click", () => choosePreset(2));
+
+
+    const overlay = document.getElementById("overlay");
+    const playAgainBtn = document.getElementById("playAgainBtn");
+    const closeWinBtn = document.getElementById("closeWinBtn");
+    const confettiCanvas = document.getElementById("confetti");
+
+    // ===== Estado juego =====
+    let imgURL = null;
+    let N = 3;
+    let pieces = [];        // {id, correctIndex, placed:false}
+    let placed = new Map(); // slotIndex -> pieceId
+    let selectedPieceId = null;
+
+    let page = 0;
+    const pageSize = 8;
+
+    function setStatus(text, win=false){
+      statusEl.classList.toggle("win", win);
+      statusText.textContent = text;
+    }
+
+    function shuffleArray(arr){
+      for(let i = arr.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function clearAll(){
+      board.querySelectorAll(".slot").forEach(s => s.remove());
+      pieceGrid.innerHTML = "";
+      pieces = [];
+      placed = new Map();
+      selectedPieceId = null;
+      page = 0;
+      updateProgress();
+      updatePager();
+      applyHelp();
+      hideWin();
+    }
+
+    function makeGrid(){
+      N = parseInt(difficulty.value, 10);
+      board.style.gridTemplateColumns = `repeat(${N}, 1fr)`;
+      board.style.gridTemplateRows = `repeat(${N}, 1fr)`;
+    }
+
+    function innerBoardSizePx(){
+      const rect = board.getBoundingClientRect();
+      const cs = getComputedStyle(board);
+      const pad = parseFloat(cs.paddingLeft) || 0;
+      const w = rect.width - pad*2;
+      const h = rect.height - pad*2;
+      return Math.floor(Math.min(w,h));
+    }
+
+    function slotSizePx(){
+      const inner = innerBoardSizePx();
+      return Math.max(56, Math.floor(inner / N));
+    }
+
+    function computePickerPieceSizePx(){
+      const w = Math.min(window.innerWidth * 0.92, 760) - 34;
+      const size = Math.floor((w - (8*3)) / 4);
+      return Math.max(62, Math.min(110, size));
+    }
+
+    function bgForIndex(pieceSizePx, correctIndex){
+      const row = Math.floor(correctIndex / N);
+      const col = correctIndex % N;
+      return {
+        size: `${pieceSizePx * N}px ${pieceSizePx * N}px`,
+        pos: `${-col * pieceSizePx}px ${-row * pieceSizePx}px`
+      };
+    }
+
+    function applyHelp(){
+      const on = helpToggle.checked && imgURL;
+      if(!on){
+        helpLayer.style.display = "none";
+        helpLayer.style.backgroundImage = "";
+        return;
+      }
+      const s = slotSizePx();
+      helpLayer.style.display = "block";
+      helpLayer.style.backgroundImage = `url(${imgURL})`;
+      helpLayer.style.backgroundSize = `${s*N}px ${s*N}px`;
+      helpLayer.style.backgroundPosition = "0 0";
+    }
+
+    function buildSlots(){
+      const total = N*N;
+      for(let i=0;i<total;i++){
+        const slot = document.createElement("div");
+        slot.className = "slot";
+        slot.dataset.index = String(i);
+
+        slot.addEventListener("click", () => {
+          const idx = parseInt(slot.dataset.index, 10);
+
+          if(!selectedPieceId){
+            slot.classList.add("pulse");
+            setTimeout(()=>slot.classList.remove("pulse"), 450);
+            beep("nope");
+            setStatus("Primero toca una pieza abajo 🙂");
+            return;
+          }
+
+          const piece = pieces.find(p => p.id === selectedPieceId);
+          if(!piece) return;
+
+          if(onlyCorrectToggle.checked && piece.correctIndex !== idx){
+            slot.classList.add("pulse");
+            setTimeout(()=>slot.classList.remove("pulse"), 450);
+            beep("nope");
+            setStatus("Esa no va ahí. Busca su lugar 😊");
+            return;
+          }
+
+          placePieceInSlot(selectedPieceId, idx);
+          selectedPieceId = null;
+          renderPiecesPage();
+        });
+
+        board.appendChild(slot);
+      }
+    }
+
+    function createPieces(){
+      const total = N*N;
+      pieces = Array.from({length: total}, (_, i) => ({
+        id: crypto.randomUUID(),
+        correctIndex: i,
+        placed: false
+      }));
+      shuffleArray(pieces);
+    }
+
+    function renderPiecesPage(){
+      pieceGrid.innerHTML = "";
+      const pickerSize = computePickerPieceSizePx();
+
+      const start = page * pageSize;
+      const end = Math.min(start + pageSize, pieces.length);
+      const slice = pieces.slice(start, end);
+
+      for(const p of slice){
+        const el = document.createElement("div");
+        el.className = "piece";
+        el.dataset.pieceId = p.id;
+        el.style.setProperty("--ps", pickerSize + "px");
+        el.style.width = pickerSize + "px";
+        el.style.height = pickerSize + "px";
+        el.style.backgroundImage = `url(${imgURL})`;
+
+        const bg = bgForIndex(pickerSize, p.correctIndex);
+        el.style.backgroundSize = bg.size;
+        el.style.backgroundPosition = bg.pos;
+
+        if(p.placed){
+          el.classList.add("done");
+        } else {
+          el.addEventListener("click", (e) => {
+            selectedPieceId = p.id;
+            document.querySelectorAll(".piece").forEach(x => x.classList.remove("selected"));
+            el.classList.add("selected");
+            beep("select");
+            setStatus("Ahora toca una casilla del tablero.");
+            hintText.textContent = "Ahora toca una casilla del tablero (arriba).";
+            e.stopPropagation();
+          });
+        }
+        pieceGrid.appendChild(el);
+      }
+
+      for(let i=0;i<(pageSize - slice.length);i++){
+        const ph = document.createElement("div");
+        ph.style.width = pickerSize + "px";
+        ph.style.height = pickerSize + "px";
+        ph.style.borderRadius = "14px";
+        ph.style.border = "2px dashed rgba(0,0,0,.12)";
+        ph.style.background = "rgba(255,255,255,.35)";
+        pieceGrid.appendChild(ph);
+      }
+
+      if(selectedPieceId){
+        const sel = pieceGrid.querySelector(`.piece[data-piece-id="${selectedPieceId}"]`);
+        sel?.classList.add("selected");
+      }
+    }
+
+    function updatePager(){
+      const total = pieces.length;
+      const pages = Math.max(1, Math.ceil(total / pageSize));
+      prevBtn.disabled = (page <= 0);
+      nextBtn.disabled = (page >= pages - 1);
+
+      const start = (page * pageSize) + 1;
+      const end = Math.min((page+1) * pageSize, total);
+      pageBadge.textContent = total ? `Piezas ${start}–${end} / ${total}` : "Piezas 0–0";
+    }
+
+    function placePieceInSlot(pieceId, slotIndex){
+      if(placed.get(slotIndex)) {
+        beep("nope");
+        setStatus("Esa casilla ya está lista ✅");
+        return;
+      }
+      const piece = pieces.find(p => p.id === pieceId);
+      if(!piece) return;
+
+      const slot = board.querySelector(`.slot[data-index="${slotIndex}"]`);
+      if(!slot) return;
+
+      const s = slotSizePx();
+
+      const el = document.createElement("div");
+      el.className = "piece";
+      el.dataset.pieceId = pieceId;
+      el.style.width = "100%";
+      el.style.height = "100%";
+      el.style.borderRadius = "12px";
+      el.style.boxShadow = "none";
+      el.style.border = "none";
+      el.style.backgroundImage = `url(${imgURL})`;
+
+      const bg = bgForIndex(s, piece.correctIndex);
+      el.style.backgroundSize = bg.size;
+      el.style.backgroundPosition = bg.pos;
+
+      slot.innerHTML = "";
+      slot.appendChild(el);
+
+      piece.placed = true;
+      placed.set(slotIndex, pieceId);
+
+      slot.classList.add("locked");
+      if(piece.correctIndex === slotIndex) slot.classList.add("good");
+
+      beep("ok");
+      setStatus("¡Bien! ✅");
+      hintText.textContent = "Elige otra pieza abajo 🙂";
+      updateProgress();
+
+      document.querySelectorAll(".piece").forEach(x => x.classList.remove("selected"));
+    }
+
+    function updateProgress(){
+      const total = N*N;
+      const done = pieces.filter(p => p.placed).length;
+      progressBadge.textContent = `${done} / ${total}`;
+
+      if(total>0 && done === total){
+        setStatus("¡Ganaste! 🎉", true);
+        hintText.textContent = "¡Terminaste! 🎉";
+        onWin();
+      }
+    }
+
+    function startGame(){
+      clearAll();
+      makeGrid();
+      buildSlots();
+      createPieces();
+
+      requestAnimationFrame(() => {
+        applyHelp();
+        shuffleBtn.disabled = false;
+        updateProgress();
+        renderPiecesPage();
+        updatePager();
+        setStatus("Toca una pieza y luego una casilla.");
+        hintText.textContent = "Toca una pieza abajo y luego toca su casilla arriba.";
+      });
+    }
+
+    function reshuffleUnplaced(){
+      const unplaced = pieces.filter(p => !p.placed);
+      const placedPieces = pieces.filter(p => p.placed);
+      shuffleArray(unplaced);
+      pieces = [...unplaced, ...placedPieces];
+      page = 0;
+      selectedPieceId = null;
+      renderPiecesPage();
+      updatePager();
+      beep("mix");
+      setStatus("🔀 ¡Mezcladas!");
+    }
+
+    // ===== Música & SFX (WebAudio) =====
+    let audioCtx = null;
+    let musicOn = false;
+    let musicTimer = null;
+    let masterGain = null;
+
+    function ensureAudio(){
+      if(audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.18; // volumen base
+      masterGain.connect(audioCtx.destination);
+    }
+
+    function playTone(freq, dur=0.10, type="sine", vol=0.25){
+      ensureAudio();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.value = vol;
+      osc.connect(gain);
+      gain.connect(masterGain);
+      const now = audioCtx.currentTime;
+      gain.gain.setValueAtTime(vol, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      osc.start(now);
+      osc.stop(now + dur);
+    }
+
+    function beep(kind){
+      // pequeños efectos
+      if(!audioCtx && !musicOn) return; // si no tocó música aún, igual puede sonar: se inicializa en primera interacción
+      try{
+        if(kind === "select"){ playTone(660, 0.06, "triangle", 0.22); }
+        else if(kind === "ok"){ playTone(880, 0.08, "sine", 0.25); playTone(1175, 0.08, "sine", 0.18); }
+        else if(kind === "nope"){ playTone(220, 0.10, "square", 0.16); }
+        else if(kind === "mix"){ playTone(494, 0.07, "triangle", 0.18); playTone(523, 0.07, "triangle", 0.18); }
+        else if(kind === "win"){ playTone(784, 0.10, "sine", 0.26); playTone(988, 0.12, "sine", 0.24); playTone(1175, 0.14, "sine", 0.22); }
+      }catch(e){}
+    }
+
+    // melodía simple tipo "k-pop chibi"
+    const melody = [
+      [784, 0.18], [0,0.04], [880,0.18], [0,0.04], [988,0.22],
+      [0,0.06], [988,0.12], [880,0.12], [784,0.22],
+      [0,0.06], [740,0.18], [0,0.04], [784,0.18], [0,0.04], [880,0.22],
+      [0,0.08], [660,0.20], [0,0.05], [740,0.20], [0,0.05], [784,0.25],
+    ];
+    let step = 0;
+
+    function startMusic(){
+      ensureAudio();
+      musicOn = true;
+      musicBtn.textContent = "🎵 Música: ON";
+      musicBtn.setAttribute("aria-pressed", "true");
+      // loop ligero
+      if(musicTimer) clearInterval(musicTimer);
+      step = 0;
+      musicTimer = setInterval(()=>{
+        const [f,d] = melody[step];
+        step = (step + 1) % melody.length;
+        if(f === 0) return;
+        playTone(f, d, "triangle", 0.14);
+      }, 140);
+    }
+
+    function stopMusic(){
+      musicOn = false;
+      musicBtn.textContent = "🎵 Música: OFF";
+      musicBtn.setAttribute("aria-pressed", "false");
+      if(musicTimer){ clearInterval(musicTimer); musicTimer = null; }
+    }
+
+    // ===== Confeti + victoria =====
+    function showWin(){
+      overlay.style.display = "flex";
+    }
+    function hideWin(){
+      overlay.style.display = "none";
+      stopConfetti();
+    }
+
+    function onWin(){
+      beep("win");
+      showWin();
+      startConfetti();
+    }
+
+    // Confeti simple canvas
+    let confettiRunning = false;
+    let confettiRAF = null;
+    let confettiParts = [];
+
+    function resizeConfetti(){
+      confettiCanvas.width = window.innerWidth * devicePixelRatio;
+      confettiCanvas.height = window.innerHeight * devicePixelRatio;
+    }
+
+    function startConfetti(){
+      confettiCanvas.style.display = "block";
+      resizeConfetti();
+      const w = confettiCanvas.width;
+      const h = confettiCanvas.height;
+
+      confettiParts = Array.from({length: 180}, () => ({
+        x: Math.random()*w,
+        y: -Math.random()*h*0.3,
+        r: (6 + Math.random()*10) * devicePixelRatio,
+        vx: (-2 + Math.random()*4) * devicePixelRatio,
+        vy: (3 + Math.random()*7) * devicePixelRatio,
+        rot: Math.random()*Math.PI,
+        vr: (-0.12 + Math.random()*0.24),
+        // colores fijos kpop
+        c: ["#ff3fa7","#7c4dff","#00d4ff","#2eb972","#ffd166"][Math.floor(Math.random()*5)]
+      }));
+
+      confettiRunning = true;
+      const ctx = confettiCanvas.getContext("2d");
+
+      const loop = () => {
+        if(!confettiRunning) return;
+        ctx.clearRect(0,0,w,h);
+        for(const p of confettiParts){
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vr;
+          if(p.y > h + 40*devicePixelRatio){
+            p.y = -40*devicePixelRatio;
+            p.x = Math.random()*w;
+          }
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.c;
+          ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*0.6);
+          ctx.restore();
+        }
+        confettiRAF = requestAnimationFrame(loop);
+      };
+      loop();
+    }
+
+    function stopConfetti(){
+      confettiRunning = false;
+      if(confettiRAF) cancelAnimationFrame(confettiRAF);
+      confettiRAF = null;
+      confettiCanvas.style.display = "none";
+    }
+
+    // ===== Eventos =====
+    imgInput.addEventListener("change", () => {
+      const file = imgInput.files?.[0];
+      if(!file){ startBtn.disabled = true; return; }
+      if(imgURL) URL.revokeObjectURL(imgURL);
+      imgURL = URL.createObjectURL(file);
+      startBtn.disabled = false;
+      shuffleBtn.disabled = true;
+      setStatus("Listo. Presiona Empezar.");
+      progressBadge.textContent = "0 / 0";
+      clearAll();
+      applyHelp();
+    });
+
+    helpToggle.addEventListener("change", applyHelp);
+
+    startBtn.addEventListener("click", () => {
+      // desbloquear audio en interacción real
+      ensureAudio();
+      if(audioCtx.state === "suspended") audioCtx.resume();
+      startGame();
+    });
+
+    shuffleBtn.addEventListener("click", reshuffleUnplaced);
+
+    prevBtn.addEventListener("click", () => {
+      if(page>0){ page--; selectedPieceId=null; renderPiecesPage(); updatePager(); setStatus("Elige una pieza 🙂"); }
+    });
+    nextBtn.addEventListener("click", () => {
+      const pages = Math.max(1, Math.ceil(pieces.length / pageSize));
+      if(page < pages-1){ page++; selectedPieceId=null; renderPiecesPage(); updatePager(); setStatus("Elige una pieza 🙂"); }
+    });
+
+    onlyCorrectToggle.addEventListener("change", () => {
+      setStatus(onlyCorrectToggle.checked ? "Modo fácil: solo permite el lugar correcto ✅" : "Modo libre: puedes probar lugares 🙂");
+    });
+
+    musicBtn.addEventListener("click", () => {
+      // en móviles, audio debe arrancar con gesto
+      ensureAudio();
+      if(audioCtx.state === "suspended") audioCtx.resume();
+      if(musicOn) stopMusic(); else startMusic();
+    });
+
+    playAgainBtn.addEventListener("click", () => {
+      hideWin();
+      reshuffleUnplaced();
+      // opcional: reiniciar tablero también
+      // (para niña, mantener piezas ya hechas puede confundir, así que reiniciamos todo)
+      startGame();
+    });
+    closeWinBtn.addEventListener("click", hideWin);
+    overlay.addEventListener("click", (e) => {
+      if(e.target === overlay) hideWin();
+    });
+
+    updatePresetThumbs();
+
+    window.addEventListener("resize", () => {
+      if(!imgURL) return;
+      renderPiecesPage();
+      updatePager();
+      applyHelp();
+      if(confettiRunning) resizeConfetti();
+    });
+
+    document.addEventListener("click", (ev) => {
+      const isPiece = ev.target.closest?.(".piece");
+      const isSlot = ev.target.closest?.(".slot");
+      const isBtn = ev.target.closest?.("button");
+      if(!isPiece && !isSlot && !isBtn){
+        selectedPieceId = null;
+        document.querySelectorAll(".piece").forEach(x => x.classList.remove("selected"));
+        setStatus("Elige una pieza abajo 🙂");
+        hintText.textContent = "Toca una pieza abajo y luego toca su casilla arriba.";
+      }
+    });
+  </script>
+</body>
+</html>
